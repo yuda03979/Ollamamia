@@ -2,7 +2,7 @@ from enum import Enum
 import ollama
 from src.funcs import *
 from src.utils import *
-from src.init import Chat, Role
+from src.model import Chat, Role
 
 
 class ChitChat(Chat):

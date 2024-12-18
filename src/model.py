@@ -5,16 +5,19 @@ from pydantic import BaseModel
 import ollama
 from src.funcs import *
 from src.utils import *
+from src.core._types import Options
+
+from src.globals import GLOBALS
 
 
 class Role(Enum):
     USER = 1
     ASSISTANT = 2
 
-from src.core._types import Options
+
 ###########################
 
-class Model:
+class TemplateModel:
 
     def __init__(
             self,
@@ -32,6 +35,9 @@ class Model:
             options: Optional[Union[Mapping[str, Any], Options]] = None,
             keep_alive: Optional[Union[float, str]] = None,
     ):
+        """
+         see https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values for details
+        """
         self.model_name = model_name
         self.logs = []
 
@@ -47,10 +53,14 @@ class Model:
         self.options = options
         self.keep_alive = keep_alive
 
-
     def init_ollama(self):
+        """for the docker if needed. maybe do not need this"""
         pass
 
+    def _manage_logs(self, response):
+        if len(self.logs) >= GLOBALS.len_logs:
+            self.logs.pop(0)
+        self.logs.append(response)
 
     def chat_stream(self, messages: list[dict]):
         response = ''
@@ -65,13 +75,18 @@ class Model:
             messages=messages
         )
 
-        self.logs.append(response)
+        self._manage_logs(response)
         return response.message.content
 
     def embed(self, query: Union[str, Sequence[str]]):
-        return ollama.embed(model=self.model_name, input=query)
+        response = ollama.embed(model=self.model_name, input=query)
+        self._manage_logs(response)
+        return response['embedding']
 
-    def _generate(self):
+    def generate(self, query):
+        response = ollama.generate(model=self.model_name, prompt=query)
+        self._manage_logs(response)
+        return response['response']
 
     def infer(self, query):
         # overwrite
@@ -83,7 +98,7 @@ class Model:
 
 ############################
 
-class Chat(Model):
+class Chat(TemplateModel):
 
     def __init__(self, model_name, prompt=None):
         super().__init__(model_name)
@@ -111,7 +126,7 @@ class Chat(Model):
 
 ############################
 
-class Embed(Model):
+class Embed(TemplateModel):
 
     def __init__(self, model_name, prefix=None):
         super().__init__(model_name)
@@ -122,73 +137,30 @@ class Embed(Model):
         return self.embed(query)
 
 
-class Generate(Model):
+###############################
+
+class Generate(TemplateModel):
 
     def __init__(
-        self,
-        model_name,
-        prompt,
-        stream=False,
-        num_keep=5,
-        seed=42,
-        num_predict=512,
-        top_k=20,
-        top_p=0.9,
-        min_p=0.0,
-        typical_p=0.7,
-        repeat_last_n=33,
-        temperature=0.8,
-        repeat_penalty=1.2,
-        presence_penalty=1.5,
-        frequency_penalty=1.0,
-        mirostat=1,
-        mirostat_tau=0.8,
-        mirostat_eta=0.6,
-        penalize_newline=True,
-        stop=("\n", "user:"),
-        numa=False,
-        num_ctx=1024,
-        num_batch=2,
-        num_gpu=1,
-        main_gpu=0,
-        low_vram=False,
-        vocab_only=False,
-        use_mmap=True,
-        use_mlock=False,
-        num_thread=8
+            self,
+            model_name
     ):
-        self.model_name = model_name
-        self.prompt = prompt
-        self.stream = stream
-        self.num_keep = num_keep
-        self.seed = seed
-        self.num_predict = num_predict
-        self.top_k = top_k
-        self.top_p = top_p
-        self.min_p = min_p
-        self.typical_p = typical_p
-        self.repeat_last_n = repeat_last_n
-        self.temperature = temperature
-        self.repeat_penalty = repeat_penalty
-        self.presence_penalty = presence_penalty
-        self.frequency_penalty = frequency_penalty
-        self.mirostat = mirostat
-        self.mirostat_tau = mirostat_tau
-        self.mirostat_eta = mirostat_eta
-        self.penalize_newline = penalize_newline
-        self.stop = stop
-        self.numa = numa
-        self.num_ctx = num_ctx
-        self.num_batch = num_batch
-        self.num_gpu = num_gpu
-        self.main_gpu = main_gpu
-        self.low_vram = low_vram
-        self.vocab_only = vocab_only
-        self.use_mmap = use_mmap
-        self.use_mlock = use_mlock
-        self.num_thread = num_thread
-
+        super().__init__(model_name)
 
     def infer(self, query):
+        return self.generate(query)
 
-    
+
+class Model:
+
+    def __init__(self):
+        pass
+
+    def chat(self, model_name):
+        return Chat(model_name)
+
+    def generate(self, model_name):
+        return Generate(model_name)
+
+    def embed(self, model_name):
+        return Embed(model_name)
