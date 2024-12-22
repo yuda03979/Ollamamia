@@ -1,61 +1,26 @@
 from enum import Enum
 from typing import Union, Sequence, Optional, Literal, Mapping, Any
-from pydantic.json_schema import JsonSchemaValue
-from pydantic import BaseModel
-import ollama
-from src.funcs import *
-from src.utils import *
-from src.core._types import Options
-
-from src.globals import GLOBALS
+from .model_config import ModelConfig
+from globals_dir.globals import GLOBALS
 
 
 class Role(Enum):
-    USER = 1
-    ASSISTANT = 2
+    USER = -1
+    ASSISTANT = 0
+    SYSTEM = 'a'
 
 
 ###########################
 
-class TemplateModel:
+class BaseModel:
 
     def __init__(
             self,
             model_name,
-            docker=False,
-            suffix: str = '',
-            *,
-            system: str = '',
-            template: str = '',
-            context: Optional[Sequence[int]] = None,
-            stream: Literal[True] = True,
-            raw: bool = False,
-            format: Optional[Union[Literal['', 'json'], JsonSchemaValue]] = None,
-            images: Optional[Sequence[Union[str, bytes]]] = None,
-            options: Optional[Union[Mapping[str, Any], Options]] = None,
-            keep_alive: Optional[Union[float, str]] = None,
     ):
-        """
-         see https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values for details
-        """
-        self.model_name = model_name
+
+        self.config = ModelConfig(model_name)
         self.logs = []
-
-        self.docker = docker
-        self.suffix: suffix
-        self.system = system
-        self.template = template
-        self.context = context
-        self.stream = stream
-        self.raw = raw
-        self.format = format
-        self.images = images
-        self.options = options
-        self.keep_alive = keep_alive
-
-    def init_ollama(self):
-        """for the docker if needed. maybe do not need this"""
-        pass
 
     def _manage_logs(self, response):
         if len(self.logs) >= GLOBALS.len_logs:
@@ -64,14 +29,14 @@ class TemplateModel:
 
     def chat_stream(self, messages: list[dict]):
         response = ''
-        for part in ollama.chat(self.model_name, messages=messages, stream=True):
+        for part in self.config.client.chat(self.config.model_name, messages=messages, stream=True):
             response += part['message']['content']
             print(part['message']['content'], end='', flush=True)
         return response
 
     def chat(self, messages: list[dict]):
-        response = ollama.chat(
-            model=self.model_name,
+        response = self.config.client.chat(
+            model=self.config.model_name,
             messages=messages
         )
 
@@ -79,14 +44,33 @@ class TemplateModel:
         return response.message.content
 
     def embed(self, query: Union[str, Sequence[str]]):
-        response = ollama.embed(model=self.model_name, input=query)
+        response = self.config.client.embed(model=self.config.model_name, input=query)
         self._manage_logs(response)
-        return response['embedding']
+        return response['embeddings']
 
     def generate(self, query):
-        response = ollama.generate(model=self.model_name, prompt=query)
+        response = self.config.client.generate(
+            model=self.config.model_name,
+            prompt=query,
+            suffix=self.config.suffix,
+            system=self.config.system,
+            template=self.config.template,
+            context=self.config.context,
+            raw=self.config.raw,
+            format=self.config.format,
+            keep_alive=self.config.keep_alive,
+            options=self.config.options.__dict__
+        )
         self._manage_logs(response)
         return response['response']
+
+    def update_params(self, other: Union[dict, ModelConfig]):
+        if isinstance(other, ModelConfig):
+            self.config = other
+        else:
+            for key, value in other.items():
+                if hasattr(self.config, key):
+                    setattr(self.config, key, value)
 
     def infer(self, query):
         # overwrite
@@ -95,10 +79,20 @@ class TemplateModel:
     def __lshift__(self, query):
         return self.infer(query)
 
+    def __le__(self, other: Union[dict, ModelConfig]):
+        self.update_params(other)
+        return True
+
+    def stop(self):
+        self.config.keep_alive = 0
+        self.infer("generate: i'm dying!!")
+        return True
+
 
 ############################
 
-class Chat(TemplateModel):
+
+class Chat(BaseModel):
 
     def __init__(self, model_name, prompt=None):
         super().__init__(model_name)
@@ -126,7 +120,7 @@ class Chat(TemplateModel):
 
 ############################
 
-class Embed(TemplateModel):
+class Embed(BaseModel):
 
     def __init__(self, model_name, prefix=None):
         super().__init__(model_name)
@@ -139,7 +133,7 @@ class Embed(TemplateModel):
 
 ###############################
 
-class Generate(TemplateModel):
+class Generate(BaseModel):
 
     def __init__(
             self,
@@ -151,16 +145,16 @@ class Generate(TemplateModel):
         return self.generate(query)
 
 
-class Model:
+def Model(model_name, task: Literal[*GLOBALS.available_tasks]):
+    match task:
+        case "null":  # "null"
+            raise ValueError("Task cannot be 'null'")
+        case "chat":
+            return Chat(model_name)
+        case "generate":
+            return Generate(model_name)
+        case "embed":
+            return Embed(model_name)
+        case _:
+            raise ValueError(f"Unsupported task: {task}")
 
-    def __init__(self):
-        pass
-
-    def chat(self, model_name):
-        return Chat(model_name)
-
-    def generate(self, model_name):
-        return Generate(model_name)
-
-    def embed(self, model_name):
-        return Embed(model_name)
