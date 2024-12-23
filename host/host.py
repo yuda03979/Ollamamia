@@ -2,6 +2,7 @@ import os
 import time
 from docker import DockerClient
 from docker.errors import DockerException, NotFound, ImageNotFound, APIError
+from globals_dir.globals import GLOBALS
 import subprocess
 import logging
 
@@ -11,7 +12,7 @@ class Host:
         - on_docker (bool): If True, manages Ollama through Docker. If False, runs locally.
     """
 
-    def __init__(self, on_docker: bool = True):
+    def __init__(self, on_docker: bool = True, models_location: str = GLOBALS.default_ollama_folder):
         self.on_docker = on_docker
         self.container_name = "ollama"
         self.image_name = "ollama/ollama"

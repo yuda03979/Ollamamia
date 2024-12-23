@@ -6,14 +6,15 @@ from globals_dir.globals import GLOBALS
 
 
 class Ollamamia:
-    def __init__(self, on_docker=True):
-        Host(on_docker=on_docker)
+    def __init__(self, on_docker=True, models_location=GLOBALS.default_ollama_folder):
+        Host(on_docker=on_docker, models_location=models_location)
         GLOBALS.init()
         self.model_config = ModelConfig
         self._models_control = ModelsControl()
 
     def add(self, model_name, model_config: ModelConfig):
         model = Model(model_name=model_name, task=model_config.task)
+        model.config = model_config
         self._models_control.add(model_name, model)
 
     def infer(self, model_name, query):
