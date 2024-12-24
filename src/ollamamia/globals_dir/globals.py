@@ -2,7 +2,6 @@ from ollama import Client
 
 
 class Globals:
-    host = 'http://localhost:11434'
     len_logs = 100
     available_tasks = ["null", "generate", "chat", "stream_chat", "embed"]
     default_ollama_folder = "~/. ollama/models"
@@ -10,7 +9,7 @@ class Globals:
         self.client = None
 
     def init(self):
-        self.client = Client(host=self.host)
+        self.client = Client()
 
 
 GLOBALS = Globals()

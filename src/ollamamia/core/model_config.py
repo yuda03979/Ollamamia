@@ -1,5 +1,5 @@
-from typing import Any, Mapping, Optional, Union, Sequence, Literal
-from globals_dir.globals import GLOBALS
+from typing import Optional, Sequence, Literal
+from src.ollamamia.globals_dir.globals import GLOBALS
 from .instantiate_model import InstantiateModels
 
 
@@ -49,7 +49,7 @@ class ModelConfig:
         self.modelfile_content: str = ""
         self.to: str = ""
         self.model_name = model_name
-        self.task: Literal[*GLOBALS.available_tasks] = task
+        self.task: Literal[tuple(GLOBALS.available_tasks)] = task
         self.client = GLOBALS.client
 
         self.options = ConfigOptiens()
@@ -60,15 +60,17 @@ class ModelConfig:
         self.raw = None
         self.format = None
         self.keep_alive = None
+        self.init()
 
     def init(self):
+        instantiate_model = InstantiateModels()
         self.verify()
         if self.to:
             pass
-        if self.pull:
-            InstantiateModels.pull(self.model_name)
-        elif self.local_path:
-            InstantiateModels.create(self.model_name, self.local_path, self.modelfile_content)
+        if self.local_path:
+            instantiate_model.create(self.model_name, self.local_path, self.modelfile_content)
+        elif self.pull:
+            instantiate_model.pull(model_name=self.model_name)
 
 
     def verify(self):

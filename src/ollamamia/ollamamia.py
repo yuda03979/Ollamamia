@@ -1,13 +1,12 @@
-from core.model_config import ModelConfig
-from core.models_control import ModelsControl
-from core.model import Model
-from host.host import Host
-from globals_dir.globals import GLOBALS
+from src.ollamamia.core.model_config import ModelConfig
+from src.ollamamia.core.models_control import ModelsControl
+from src.ollamamia.core.model import Model
+from src.ollamamia.globals_dir.globals import GLOBALS
+from src.ollamamia.utils.chitchat import ChitChat
 
 
 class Ollamamia:
-    def __init__(self, on_docker=True, models_location=GLOBALS.default_ollama_folder):
-        Host(on_docker=on_docker, models_location=models_location)
+    def __init__(self, models_location=GLOBALS.default_ollama_folder):
         GLOBALS.init()
         self.model_config = ModelConfig
         self._models_control = ModelsControl()
@@ -34,5 +33,5 @@ class Ollamamia:
     def ps(self):
         pass
 
-    def chitchat(self):
-        pass
+    def chitchat(self, model_name, prompt=None):
+        ChitChat(model_name, prompt)

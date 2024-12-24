@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Union, Sequence, Optional, Literal, Mapping, Any
+from typing import Union, Sequence, Literal
 from .model_config import ModelConfig
-from globals_dir.globals import GLOBALS
+from src.ollamamia.globals_dir.globals import GLOBALS
 
 
 class Role(Enum):
@@ -12,13 +12,10 @@ class Role(Enum):
 
 ###########################
 
+
 class BaseModel:
 
-    def __init__(
-            self,
-            model_name,
-    ):
-
+    def __init__(self, model_name,):
         self.config = ModelConfig(model_name)
         self.logs = []
 
@@ -145,7 +142,7 @@ class Generate(BaseModel):
         return self.generate(query)
 
 
-def Model(model_name, task: Literal[*GLOBALS.available_tasks]):
+def Model(model_name, task: Literal[tuple(GLOBALS.available_tasks)]):
     match task:
         case "null":  # "null"
             raise ValueError("Task cannot be 'null'")
@@ -157,4 +154,3 @@ def Model(model_name, task: Literal[*GLOBALS.available_tasks]):
             return Embed(model_name)
         case _:
             raise ValueError(f"Unsupported task: {task}")
-
