@@ -6,7 +6,6 @@ import platform
 
 def exiting_ollamamia():
     print("\nexiting ollamamia...")
-    a
     # need to stop
 
 

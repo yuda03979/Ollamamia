@@ -44,7 +44,7 @@ class ModelConfig:
     """download, activate, and manage all the parameters"""
 
     def __init__(self, model_name, task="null"):
-        self.pull: bool = True
+        self.pull: bool = False
         self.local_path: str = ""
         self.modelfile_content: str = ""
         self.to: str = ""
