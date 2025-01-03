@@ -116,7 +116,8 @@ class AgentMessage(CustomBasePydantic):
     All the agents must return only this object.
     """
     agent_name: str
-    agent_task: Literal["rule_type_classifier", "rule_type_generator"]
+    agent_description: str
+    succeed: bool
     agent_input: str | dict | list | tuple
     agent_message: str | dict | list | tuple
     message_model: str | list

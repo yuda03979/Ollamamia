@@ -1,10 +1,13 @@
 from agents.base_agent import BaseAgent
 from globals_dir.models_manager import MODELS_MANAGER
 from globals_dir.utils import get_dict
+import time
+from globals_dir.utils import AgentMessage
 
 
 class AgentGenerateSchema(BaseAgent):
-    description = """"""
+    description = """given schema and free text, (and maybe some more parameters - depends on the prompt you choose
+    the agent job is to return the values from the free text according to the schema"""
 
     model_nickname = str(MODELS_MANAGER.get_num_models())
     engine = "ollama"
@@ -38,6 +41,9 @@ class AgentGenerateSchema(BaseAgent):
         example2: dict[dict] | None = kwargs.get("example2")
         description: dict | str | None = kwargs.get("description")
 
+        start = time.time()
+
+
         prompt = self.prompt_func(
             free_text=query,
             rule_name=rule_name,
@@ -49,10 +55,17 @@ class AgentGenerateSchema(BaseAgent):
 
         response_model = MODELS_MANAGER[self.model_nickname].infer(prompt) + "}"
         response, succeed = get_dict(response_model)
-        return response
 
-
-
+        agent_message = AgentMessage(
+            agent_name=self.agent_name,
+            agent_description=self.description,
+            agent_input=query,
+            succeed=succeed,
+            agent_message=response,
+            message_model=response_model,
+            infer_time=time.time() - start
+        )
+        return agent_message
 
 
 class Prompts:
