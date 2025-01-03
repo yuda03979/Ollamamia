@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ollamamia',
-    version='0.0.2',
+    version='0.0.21',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     py_modules=["agent_store", "models_manager", "ollamamia"],
