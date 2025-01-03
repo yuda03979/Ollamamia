@@ -5,7 +5,7 @@ from logic.basic_rag import BasicRag
 import time
 
 
-class AgentRuleClassifier(BaseAgent):
+class AgentExamplesClassifier(BaseAgent):
     description = """rag implemented for elta, suitable for small - medium size db. """
 
     model_nickname = str(MODELS_MANAGER.get_num_models())
@@ -13,16 +13,17 @@ class AgentRuleClassifier(BaseAgent):
     model_name = "snowflake-arctic-embed:137m"
     task = "embed"
 
-    rag_threshold: float = 0.5  # if the highest similarity is under this - we failed.
+    similarity_threshold_adding_example: float = 0.5
 
-    max_rules: int = 100_000
+    max_examples: int = 100_000
     prefix: str = "classification: \n"
+    num_examples: int = 2
     softmax: bool = True
     softmax_temperature: float = 0
 
     def __init__(self, agent_name: str):
         super().__init__(agent_name=agent_name)
-        self.rule_classifier = BasicRag(model_nickname=self.model_nickname, max_rules=self.max_rules)
+        self.basic_rag = BasicRag(model_nickname=self.model_nickname, max_rules=self.num_examples)
         # initializing the model
         MODELS_MANAGER[self.model_nickname] = [self.engine, self.model_name, self.task]
         MODELS_MANAGER[self.model_nickname].config.prefix = self.prefix  # add prefix for improving the rag accuracy
@@ -34,34 +35,39 @@ class AgentRuleClassifier(BaseAgent):
         ####################
 
         query_embeddings: list[float] = MODELS_MANAGER[self.model_nickname].infer(query)[0]
-        rules_list = self.rule_classifier.get_close_types_names(
+        rules_list = self.basic_rag.get_close_types_names(
             query=query,
             query_embedding=query_embeddings,
             softmax=self.softmax,
             temperature=self.softmax_temperature
         )
 
-        succeed = False
-        closest_distance = rules_list[0][1]
-
-        # Validate based on threshold and difference
-        if closest_distance > self.rag_threshold:
-            succeed = True
+        example1 = rules_list[0][0]
+        example2 = rules_list[0][1]
 
         ####################
 
         agent_message = AgentMessage(
             agent_name=self.agent_name,
             agent_description=self.description,
-            agent_input=query,
-            succeed=succeed,
+            agent_input=[example1, example2],
+            succeed=True,
             agent_message=rules_list[0][0],
             message_model=rules_list,
             infer_time=time.time() - start
         )
         return agent_message
 
-    def add_rule(self, rule_name: str, query_to_embed: str):
-        query_embeddings: list[float] = MODELS_MANAGER[self.model_nickname].infer(query_to_embed)[0]
-        self.rule_classifier.add_rule(rule_name=rule_name, query_to_embed=query_to_embed,
-                                      query_embeddings=query_embeddings)
+    def add_example(self, example: str):
+        example_embeddings: list[float] = MODELS_MANAGER[self.model_nickname].infer(example)[0]
+        other_examples = self.basic_rag.get_close_types_names(
+                query=example,
+                query_embedding=example_embeddings,
+                softmax=self.softmax,
+                temperature=self.softmax_temperature
+        )
+        if other_examples[0][1] > self.similarity_threshold_adding_example:
+            print("there's similar examples already. no action perform.")
+            return
+        else:
+            self.basic_rag.add_rule(rule_name=example, query_to_embed=example, query_embeddings=example_embeddings)
