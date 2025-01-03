@@ -1,5 +1,7 @@
 from agents.classifiers.agent_rule_classifier import AgentRuleClassifier
 from agents.generators.agent_generate_schema import AgentGenerateSchema
+from agents.classifiers.agent_examples_classifier import AgentExamplesClassifier
+from globals_dir.utils import AgentsFlow
 
 class AgentsStore:
 
@@ -7,8 +9,11 @@ class AgentsStore:
         self.agents = {}
         self.agents_available = {
             "AgentRuleClassifier": AgentRuleClassifier,
-            "AgentGenerateSchema": AgentGenerateSchema
+            "AgentGenerateSchema": AgentGenerateSchema,
+            "AgentExamplesClassifier": AgentExamplesClassifier
         }
+
+        self.agents_flow = None
 
 
     def add_agents(self, agent_nickname: str, agent_name: str):
@@ -27,19 +32,30 @@ class AgentsStore:
             print(f"agent_nickname {agent_nickname} already exist. overwriting...")
         self.agents[agent_nickname] = self.agents_available[agent_name](agent_name=agent_nickname)
 
-
-    def infer(self, model_nickname, query: dict | str):
+    def predict(self, model_nickname, query: dict | str):
         if not model_nickname in self.models.keys():
             handle_errors(e=f"model_nickname: {model_nickname} do not exist. \nexisting nicknames: {list(self.agents.keys())}")
-        return self.agents[model_nickname].predict(query)
+        if not self.agents_flow:
+            self.agents_flow = AgentsFlow(query=query)
+        self.agents_flow.append(self.agents[model_nickname].predict(query))
+        return self.agents_flow
 
+    def new(self):
+        """
+        delete the data from previous covesations
+        :return: None
+        """
+        del self.agents_flow
+        self.agents_flow = None
 
     def __setitem__(self, key: str, value: str):
         self.add_agents(agent_nickname=key, agent_name=value)
 
-
     def __getitem__(self, item):
-        return self.agents.get(item)
+        if isinstance(item, slice):
+            self.predict(item.start, item.stop)
+        else:
+            return self.agents.get(item)
 
     def cusbara(self):
         """

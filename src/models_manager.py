@@ -1,5 +1,5 @@
 from typing import Literal
-from .model import Model
+from models_dir.model import Model
 from globals_dir.utils import handle_errors
 
 

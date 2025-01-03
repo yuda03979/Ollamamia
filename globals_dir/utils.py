@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Union, Literal, get_origin, get_args, Sequence
+from typing import Optional, Union, Literal, get_origin, get_args, Sequence, Any
 from collections.abc import Sequence as SequenceABC
 from pydantic import BaseModel, Field
 import uuid
@@ -82,16 +82,16 @@ def custom_is_instance(value, field_type):
             return True
         key_type, value_type = args
         return (
-            all(
-                isinstance(k, key_type) if isinstance(key_type, type) and not get_origin(key_type)
-                else custom_is_instance(k, key_type)
-                for k in value.keys()
-            ) and
-            all(
-                isinstance(v, value_type) if isinstance(value_type, type) and not get_origin(value_type)
-                else custom_is_instance(v, value_type)
-                for v in value.values()
-            )
+                all(
+                    isinstance(k, key_type) if isinstance(key_type, type) and not get_origin(key_type)
+                    else custom_is_instance(k, key_type)
+                    for k in value.keys()
+                ) and
+                all(
+                    isinstance(v, value_type) if isinstance(value_type, type) and not get_origin(value_type)
+                    else custom_is_instance(v, value_type)
+                    for v in value.values()
+                )
         )
 
     # Handle Literal type
@@ -99,7 +99,6 @@ def custom_is_instance(value, field_type):
         return value in args
 
     return False
-
 
 
 class CustomBasePydantic(BaseModel):
@@ -125,11 +124,11 @@ class AgentMessage(CustomBasePydantic):
     infer_time: float | None = None
 
 
-class DataPipe(CustomBasePydantic):
+class AgentsFlow(CustomBasePydantic):
     """
     In this object, we save all the data across the pipeline.
     """
-    query: str
+    query: Any
     message: dict = {}
     is_error: bool = False
     agents_massages: Optional[list[AgentMessage]] = None
@@ -147,7 +146,6 @@ class DataPipe(CustomBasePydantic):
 def handle_errors(e: str):
     print(e)
     raise
-
 
 
 def get_dict(input_string):
