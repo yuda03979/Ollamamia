@@ -3,14 +3,15 @@ from setuptools import setup, find_packages
 setup(
     name='ollamamia',
     version='0.0.2',
-    package_dir={"ollamamia": "src"},
-    packages=["ollamamia"],
+    packages=find_packages(where='src'),
+    package_dir={'': 'src'},
     py_modules=["agent_store", "models_manager", "ollamamia"],
+    exclude_package_data={'': ['.env']},
     install_requires=[
-        "numpy~=1.26.0",
-        "scikit-learn~=1.4.2",
-        "pydantic~=2.9.1",
-        "setuptools~=70.0.0",
-        "ollama~=0.4.4"
+        'ollama==0.4.4',
+        'tqdm==4.66.4',
+        'readchar==4.0.5',
+        'termcolor==2.5.0',
+        "setuptools==69.5.1"
     ],
 )

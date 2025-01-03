@@ -22,6 +22,7 @@ class AgentGenerateSchema(BaseAgent):
 
     def __init__(self, agent_name):
         super().__init__(agent_name=agent_name)
+        self.model_nickname = f"{agent_name}_{self.model_nickname}"
         self.prompt_func = Prompts(self.engine, self.model_type).prompt_func
         # initializing the model
         MODELS_MANAGER[self.model_nickname] = [self.engine, self.model_name, self.task]

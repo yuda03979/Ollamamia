@@ -22,6 +22,7 @@ class AgentRuleClassifier(BaseAgent):
 
     def __init__(self, agent_name: str):
         super().__init__(agent_name=agent_name)
+        self.model_nickname = f"{agent_name}_{self.model_nickname}"
         self.rule_classifier = BasicRag(model_nickname=self.model_nickname, max_rules=self.max_rules)
         # initializing the model
         MODELS_MANAGER[self.model_nickname] = [self.engine, self.model_name, self.task]
