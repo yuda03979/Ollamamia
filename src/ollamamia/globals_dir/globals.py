@@ -9,5 +9,9 @@ class Globals:
     def __init__(self):
         self.client = Client()
 
+    def init(self, models_location=None):
+        if models_location:
+            self.default_ollama_folder = models_location
+
 
 GLOBALS = Globals()

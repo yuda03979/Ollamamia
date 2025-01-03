@@ -121,7 +121,6 @@ class Embed(BaseModel):
 
     def __init__(self, model_name, prefix=None):
         super().__init__(model_name)
-        self.messages = []
         self.prefix = prefix
 
     def infer(self, query: Union[str, Sequence[str]]) -> list[list]:

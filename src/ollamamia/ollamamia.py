@@ -6,8 +6,8 @@ from src.ollamamia.utils.chitchat import ChitChat
 
 
 class Ollamamia:
-    def __init__(self, models_location=GLOBALS.default_ollama_folder):
-        GLOBALS.init()
+    def __init__(self, models_location=None):
+        GLOBALS.init(models_location)
         self.model_config = ModelConfig
         self._models_control = ModelsControl()
 
