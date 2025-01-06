@@ -1,0 +1,35 @@
+from setuptools import setup, find_packages
+
+setup(
+    name='ollamamia',
+    version='0.0.23',
+    packages=find_packages(),
+    install_requires=[
+        "pandas==2.2.3",
+        "numpy==1.26.0",
+        "scikit-learn==1.4.2",
+        "torch==2.5.1",
+        "requests==2.32.2",
+        "openai==1.57.2",
+        "python-dotenv==1.0.1",
+        "tqdm==4.66.4",
+        "httpx==0.27.2",
+        "fastapi==0.115.5",
+        "pydantic==2.9.1",
+        "uvicorn==0.30.6",
+        "joblib==1.4.2",
+        "ollama==0.4.4",
+    ],
+    author='yuda',
+    author_email='yuda03979@gmail.com',
+    description='',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
+    url='https://github.com/yourusername/ollamamia',
+    classifiers=[
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+    ],
+    python_requires='>=3.6',
+)
