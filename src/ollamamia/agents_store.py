@@ -15,7 +15,6 @@ class AgentsStore:
             "AgentGenerateSchema": AgentGenerateSchema,
             "AgentExamplesClassifier": AgentExamplesClassifier
         }
-
         self.store = ""  # enum for available models
         self.agents_flow = None
         self.start = None
