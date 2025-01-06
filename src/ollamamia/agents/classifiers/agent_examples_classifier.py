@@ -18,7 +18,7 @@ class AgentExamplesClassifier:
     prefix: str = "classification: \n"
     num_examples: int = 100_000
     softmax: bool = False
-    softmax_temperature: float = 0
+    softmax_temperature: float = 0.05
 
     def __init__(self, agent_name: str):
         self.agent_name = agent_name
